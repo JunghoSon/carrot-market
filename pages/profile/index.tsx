@@ -7,7 +7,7 @@ import useSWR, { SWRConfig } from "swr";
 import { cls } from "libs/client/utils";
 import { withSsrSession } from "libs/server/withApiSession";
 import client from "libs/server/client";
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 
 interface ReviewWithUser extends Review {
   createdBy: User;
@@ -19,7 +19,11 @@ interface ReviewsResponse {
 }
 
 const Reviews = () => {
-  const { data } = useSWR<ReviewsResponse>("/api/reviews");
+  const [win, setWin] = useState<Window & typeof globalThis>();
+  const { data } = useSWR<ReviewsResponse>(!win ? null : "/api/reviews");
+  useEffect(() => {
+    setWin(window);
+  }, []);
   return (
     <>
       {data?.reviews.map((review) => (
@@ -169,13 +173,13 @@ const Profile: NextPage = () => {
 
 const Page: NextPage = () => {
   return (
-    // <SWRConfig
-    //   value={{
-    //     suspense: true,
-    //   }}
-    // >
-    <Profile />
-    // </SWRConfig>
+    <SWRConfig
+      value={{
+        suspense: true,
+      }}
+    >
+      <Profile />
+    </SWRConfig>
   );
 };
 
