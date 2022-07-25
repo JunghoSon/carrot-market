@@ -7,6 +7,7 @@ import useSWR, { SWRConfig } from "swr";
 import { cls } from "libs/client/utils";
 import { withSsrSession } from "libs/server/withApiSession";
 import client from "libs/server/client";
+import { Suspense } from "react";
 
 interface ReviewWithUser extends Review {
   createdBy: User;
@@ -151,37 +152,34 @@ const Profile: NextPage = () => {
   );
 };
 
-const Page: NextPage<{ profile: User }> = ({ profile }) => {
+const Page: NextPage = () => {
   return (
     <SWRConfig
       value={{
-        fallback: {
-          "/api/users/me": {
-            ok: true,
-            profile,
-          },
-        },
+        suspense: true,
       }}
     >
-      <Profile />
+      <Suspense fallback={<span>Loading...</span>}>
+        <Profile />
+      </Suspense>
     </SWRConfig>
   );
 };
 
-export const getServerSideProps = withSsrSession(async function ({
-  req,
-}: NextPageContext) {
-  console.log(req?.session.user);
-  const profile = await client.user.findUnique({
-    where: {
-      id: req?.session.user?.id,
-    },
-  });
-  return {
-    props: {
-      profile: JSON.parse(JSON.stringify(profile)),
-    },
-  };
-});
+// export const getServerSideProps = withSsrSession(async function ({
+//   req,
+// }: NextPageContext) {
+//   console.log(req?.session.user);
+//   const profile = await client.user.findUnique({
+//     where: {
+//       id: req?.session.user?.id,
+//     },
+//   });
+//   return {
+//     props: {
+//       profile: JSON.parse(JSON.stringify(profile)),
+//     },
+//   };
+// });
 
 export default Page;
